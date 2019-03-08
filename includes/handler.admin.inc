@@ -68,7 +68,16 @@ function islandora_oai_handler_configuration_form($form, &$form_state) {
     '#default_value' => variable_get('islandora_oai_append_dc_thumbnail', FALSE),
     '#description' => t("If this option is selected, a link to an object's thumbnail will be added to OAI_DC responses."),
   );
+  $form['islandora_oai_configuration']['islandora_oai_exclude_items'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Excluded Items'),
+    '#size' => '50',
+    '#default_value' => variable_get('islandora_oai_exclude_items',''),
+    '#description' => t('Items (namespace:pid) to be excluded. Can also be wildwards.'),
+  );
+
   if (!variable_get('islandora_namespace_restriction_enforced', FALSE)) {
+
     $form['islandora_oai_configuration']['islandora_oai_exclude_islandora_namespace']['#disabled'] = TRUE;
     $form['islandora_oai_configuration']['islandora_oai_exclude_islandora_namespace']['#description'] = t('Excluding the Islandora namespace is only possible when namespace restrictions are enabled within the <a href="@islandora_url">Islandora</a> module.', array(
       '@islandora_url' => url('admin/islandora/configure'),
@@ -273,6 +282,7 @@ function islandora_oai_handler_configuration_form_submit($form, &$form_state) {
   variable_set('islandora_oai_date_field', $form_state['values']['islandora_oai_configuration']['islandora_oai_date_field']);
   variable_set('islandora_oai_exclude_islandora_namespace', $form_state['values']['islandora_oai_configuration']['islandora_oai_exclude_islandora_namespace']);
   variable_set('islandora_oai_append_dc_thumbnail', $form_state['values']['islandora_oai_configuration']['islandora_oai_append_dc_thumbnail']);
+  variable_set('islandora_oai_exclude_items', $form_state['values']['islandora_oai_configuration']['islandora_oai_exclude_items']);
   // Loop through our transform options.
   foreach ($form_state['values']['islandora_oai_metadata']['islandora_oai_options'] as $key => $value) {
     variable_set($key, $value);

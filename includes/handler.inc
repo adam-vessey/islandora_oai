@@ -5,6 +5,66 @@
  * Stores all the default handler functionality for OAI responses.
  */
 
+function islandora_oai_isrestricted( $pid ) {
+  // check if the pid exists in the excluded item list
+}
+
+/**
+ * Filter an array of records using another array of filters
+ *
+ * @param array items
+ * - items containing one or more 'object' items
+ * - 'objects' contain a 'value' that is the object PID
+ *
+ * @return array
+ * - array contains original items minus any items that were filtered 
+ */
+function islandora_oai_filterexcluded1( $items ) {
+  // filter out excluded items
+  $empty_filters = array();
+  $filters = variable_get('islandora_oai_exclude_items', $empty_filters);
+  $filters = explode("\n",$filters);
+  foreach ($filters as $key => $filter) {
+    $filters[$key] = trim($filters[$key]);
+  }
+  foreach ($items as $key => $result) {
+    foreach ($filters as $filter) {
+      if (fnmatch($filter,$result['object']['value'])) {
+        unset($items[$key]);
+      }
+    }
+  }
+  return $items;
+}
+
+/**
+ * Filter an array of records using another array of filters
+ *
+ * @param array items
+ * - items containing one or more 'object' items
+ * - 'objects' contain a 'pid' that is the object PID
+ *
+ * @return array
+ * - array contains original items minus any items that were filtered
+ */
+function islandora_oai_filterexcluded2( $items ) {
+  // filter out excluded items
+  $empty_filters = array();
+  $filters = variable_get('islandora_oai_exclude_items', $empty_filters);
+  $filters = explode("\n",$filters);
+  foreach ($filters as $key => $filter) {
+    $filters[$key] = trim($filters[$key]);
+  }
+  foreach ($items as $key => $result) {
+    foreach ($filters as $filter) {
+      if (fnmatch($filter,$result['pid'])) {
+        unset($items[$key]);
+      }
+    }
+  }
+  return $items;
+}
+
 /**
  * Responds to the ListSets request.
  *
@@ -35,6 +95,10 @@ function islandora_oai_retrieve_sets($params) {
 EOQ;
   $query_results = $connection->repository->ri->sparqlQuery($sparql_query);
   module_load_include('inc', 'islandora', 'includes/dublin_core');
+ 
+  // filter out excluded items
+  $query_results = islandora_oai_filterexcluded1( $query_results );
+
   foreach ($query_results as $result) {
     $object = islandora_object_load($result['object']['value']);
     $description = FALSE;
@@ -232,6 +296,8 @@ function islandora_oai_retrieve_record($params) {
     $solr_object = $results['objects'][0];
     $record = islandora_oai_construct_record_from_solr_response($solr_object);
   }
+  // filter out excluded items
+  $records = islandora_oai_filterexcluded2( $record );
   return $record;
 }
 
@@ -313,6 +379,10 @@ function islandora_oai_retrieve_records_or_identifiers($params) {
   foreach ($results['objects'] as $solr_object) {
     $records[] = islandora_oai_construct_record_from_solr_response($solr_object);
   }
+
+  // filter out excluded items
+  $records = islandora_oai_filterexcluded2( $records );
+
   return array(
     'total_records' => $results['numFound'],
     'records' => $records,
