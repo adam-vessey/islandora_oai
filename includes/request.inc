@@ -79,8 +79,10 @@ function islandora_oai_parse_request() {
   // Check to see if we have a bad verb.
   $error_list = islandora_oai_get_errors();
 
-  if (!count($error_list)) {
-    $writer->writeAttribute('verb', $verb);
+  if (is_array($error_list)) {
+    if (!count($error_list)) {
+      $writer->writeAttribute('verb', $verb);
+    }
   }
   $writer->text($request_url);
   $writer->endElement();
@@ -148,10 +150,16 @@ function islandora_oai_get_errors() {
   $errors = islandora_oai_add_error('get');
 
   // Return false if no errors.
-  if (!count($errors)) {
+  if (is_array($errors)) {
+    if (!count($errors)) {
+      return FALSE;
+    } else {
+      return $errors;
+    }
+  }
+  else {
     return FALSE;
   }
-  return $errors;
 }
 
 /**
